@@ -265,3 +265,60 @@ span{
         margin-top: 4rem;
     }
 }
+/* ===== SKILLS PAGE ===== */
+.skills {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: black;
+    padding: 5rem 9% 5rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.skills-content {
+    width: 100%;
+}
+
+.skills-content h1 {
+    font-size: 5rem;
+    font-weight: 700;
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.skills-content h2 {
+    font-size: 2.8rem;
+    color: #714bb7;
+    margin-top: 2.5rem;
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+}
+
+.skills-content p {
+    font-size: 1.6rem;
+    line-height: 1.8;
+    color: #e0e0e0;
+    text-align: justify;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+@media (max-width: 768px) {
+    .skills-content h1 {
+        font-size: 3.5rem;
+    }
+
+    .skills-content h2 {
+        font-size: 2.2rem;
+    }
+
+    .skills-content p {
+        font-size: 1.4rem;
+    }
+
+    .skills {
+        padding: 3rem 5%;
+    }
+}
+
