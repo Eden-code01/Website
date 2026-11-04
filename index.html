@@ -1,54 +1,140 @@
 <!DOCTYPE html>
-<html lang="en"> <!-- ou 'pt-BR', mas use inglês se todo conteúdo estiver em inglês -->
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio Website – Éden Samuel</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Eden.OS — Éden Samuel</title>
+  <meta name="description" content="Éden Samuel — Software Engineer focado em IA, automação e dados. Portfólio em formato de sistema operacional.">
+  <meta name="theme-color" content="#06070a">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2306070a'/%3E%3Cpath d='M10 9h12v3h-8.5v2.6H21v3h-7.5V20H22v3H10z' fill='%238b7bff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/os.css">
 </head>
 <body>
-    <header>
-        <a href="index.html" class="logo">Éden</a>
 
-        <nav>
-            <a href="index.html" class="active">Home</a>
-            <a href="skills.html">Skills</a>
-            <a href="#">Contact</a>
-        </nav>
+  <!-- SVG icon sprite -------------------------------------------------- -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 13h8"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/></symbol>
+    <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M5 15c-1.5 1.5-2 5-2 5s3.5-.5 5-2"/><path d="M9 15l-3-3c1.5-4 5-8 13-9-1 8-5 11.5-9 13z"/><circle cx="14.5" cy="9.5" r="1.5"/></symbol>
+    <symbol id="i-flow" viewBox="0 0 24 24"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h4a3 3 0 0 1 3 3v6"/></symbol>
+    <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/><rect x="10" y="10" width="4" height="4"/></symbol>
+    <symbol id="i-term" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M12 15h5"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></symbol>
+    <symbol id="i-in" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/></symbol>
+    <symbol id="i-gh" viewBox="0 0 24 24"><path d="M9 19c-4 1.3-4-2-6-2.5M15 21v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+    <symbol id="i-ig" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5v.01"/></symbol>
+  </svg>
+
+  <!-- 01 · BOOT -------------------------------------------------------- -->
+  <section id="boot" class="screen" aria-label="Inicializando sistema">
+    <div class="boot-inner">
+      <div class="boot-mark">EDEN<span>.OS</span></div>
+      <pre id="boot-log" class="boot-log" aria-live="polite"></pre>
+      <div class="boot-bar"><i id="boot-progress"></i></div>
+      <p class="boot-skip">clique ou pressione qualquer tecla para pular</p>
+    </div>
+  </section>
+
+  <!-- 02 · LOGIN ------------------------------------------------------- -->
+  <section id="login" class="screen" aria-label="Acesso ao sistema" hidden>
+    <div class="login-clock">
+      <div id="login-time" class="login-time">00:00</div>
+      <div id="login-date" class="login-date"></div>
+    </div>
+    <div class="login-card">
+      <div class="avatar avatar-lg"><span>ES</span><i class="pulse"></i></div>
+      <h1 class="login-name">Éden Samuel</h1>
+      <p class="login-role">Software Engineer · IA &amp; Automação</p>
+      <button id="login-btn" class="login-btn" type="button">
+        <span class="login-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="login-label">Acessar sistema</span>
+        <svg class="ic"><use href="#i-arrow"/></svg>
+      </button>
+      <p class="login-hint">pressione <kbd>Enter</kbd></p>
+    </div>
+    <div class="login-foot mono">guest@eden.os · acesso público · somente leitura</div>
+  </section>
+
+  <!-- 03 · DESKTOP ----------------------------------------------------- -->
+  <main id="desktop" class="screen" hidden>
+    <canvas id="neural" aria-hidden="true"></canvas>
+    <div class="grid-overlay" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="tb-left">
+        <button class="tb-logo" data-open="about" aria-label="Sobre">EDEN<span>.OS</span></button>
+        <span id="tb-active" class="tb-active">Desktop</span>
+      </div>
+      <button class="tb-search" id="tb-search" type="button">
+        <svg class="ic"><use href="#i-spark"/></svg>
+        <span>Pergunte ao Eden.AI ou busque…</span>
+        <kbd class="kbd-cmd">⌘K</kbd>
+      </button>
+      <div class="tb-right mono">
+        <span class="tb-stat"><i class="dot ok"></i><span class="hide-sm">online</span></span>
+        <span class="tb-stat hide-sm">CPU <b id="tb-cpu">12%</b></span>
+        <span class="tb-stat hide-sm">UP <b id="tb-up">00:00</b></span>
+        <span id="tb-clock" class="tb-stat">--:--</span>
+      </div>
     </header>
 
-    <section class="home">
-        <div class="home-img">
-            <img src="main.gif" alt="Animated developer graphic">
-        </div>
-
-        <div class="home-content">
-            <h1>Hi, It's <span>Éden</span></h1>
-            <h3 class="typing-text">I'm a <span></span></h3>
-
-            <p>
-                I'm an 18-year-old Software Engineering student at PUCPR, passionate about creating smart and useful digital solutions. I’m fluent in English and currently expanding my skills in Web Development, Java, and Databases, with a solid foundation in Python.
-            </p>
-            <p>
-                I also bring real-world experience in customer service, insurance consulting, and consortia sales — which has taught me how to communicate clearly, understand client needs, and focus on delivering results.
-            </p>
-            <p>
-                Outside of tech, I enjoy playing soccer, watching movies, reading manga and comics, and exploring new games.
-            </p>
-            <p>
-                I believe in continuous learning, solving real-life problems with technology, and building things that make people's lives easier.
-            </p>
-
-            <div class="social-icons">
-                <a href="https:/www.linkedin.com/in/éden-samuel-22854b19b" target="_blank"><i class="fa-brands fa-linkedin"></i></a>
-                <a href="https://github.com/Eden-code01" target="_blank"><i class="fa-brands fa-github"></i></a>
-                <a href="https://www.instagram.com/eden_samuelm0/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
-                <a href="mailto:seuemail@email.com"><i class="fa-brands fa-google"></i></a>
-            </div>
-
-            <a href="mailto:seuemail@email.com" class="btn">Hire me</a>
-        </div>
+    <!-- desktop hero / widgets -->
+    <section class="hero" aria-label="Resumo">
+      <p class="hero-kicker mono"><i class="dot ok"></i> sistema operacional pessoal · v2.6</p>
+      <h1 class="hero-title">Engenharia, IA e automação<br><span>para operar em alta performance.</span></h1>
+      <p class="hero-sub">Sou Éden Samuel. Construo sistemas inteligentes que automatizam processos, organizam dados e geram resultado. Explore os módulos abaixo.</p>
     </section>
+
+    <aside class="widgets" aria-label="Status">
+      <div class="widget">
+        <div class="w-head mono">system.status</div>
+        <ul class="w-list mono" id="w-status"></ul>
+      </div>
+      <div class="widget">
+        <div class="w-head mono">activity.stream</div>
+        <ul class="w-feed mono" id="w-feed"></ul>
+      </div>
+    </aside>
+
+    <nav class="icons" id="icons" aria-label="Aplicativos"></nav>
+
+    <div id="windows" class="windows"></div>
+
+    <nav class="dock" id="dock" aria-label="Dock"></nav>
+
+    <!-- command palette -->
+    <div id="palette" class="palette" hidden>
+      <div class="palette-box" role="dialog" aria-label="Eden.AI">
+        <div class="palette-input">
+          <svg class="ic"><use href="#i-spark"/></svg>
+          <input id="palette-q" type="text" placeholder="Pergunte algo… ex: “o que é a Up Lead?”" autocomplete="off" spellcheck="false">
+          <kbd>esc</kbd>
+        </div>
+        <div id="palette-answer" class="palette-answer" hidden></div>
+        <ul id="palette-list" class="palette-list"></ul>
+        <div class="palette-foot mono"><span>↑↓ navegar</span><span>↵ abrir</span><span>Eden.AI · assistente local</span></div>
+      </div>
+    </div>
+  </main>
+
+  <noscript>
+    <div class="noscript">
+      <h1>Éden Samuel</h1>
+      <p>Software Engineer · IA &amp; Automação. Ative o JavaScript para acessar o Eden.OS.</p>
+      <p><a href="https://github.com/Eden-code01">GitHub</a> · <a href="https://www.linkedin.com/in/%C3%A9den-samuel-22854b19b">LinkedIn</a></p>
+    </div>
+  </noscript>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/os.js"></script>
 </body>
 </html>
