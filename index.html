@@ -46,6 +46,7 @@
 
   <!-- 02 · LOGIN ------------------------------------------------------- -->
   <section id="login" class="screen" aria-label="Acesso ao sistema" hidden>
+    <canvas id="gravity" aria-hidden="true"></canvas>
     <div class="login-clock">
       <div id="login-time" class="login-time">00:00</div>
       <div id="login-date" class="login-date"></div>
@@ -87,12 +88,17 @@
       </div>
     </header>
 
-    <!-- desktop hero / widgets -->
+    <!-- desktop home: hero + app icons -->
+    <div class="home">
     <section class="hero" aria-label="Resumo">
       <p class="hero-kicker mono"><i class="dot ok"></i> sistema operacional pessoal · v2.6</p>
       <h1 class="hero-title">Engenharia, IA e automação<br><span>para operar em alta performance.</span></h1>
       <p class="hero-sub">Sou Éden Samuel. Construo sistemas inteligentes que automatizam processos, organizam dados e geram resultado. Explore os módulos abaixo.</p>
     </section>
+
+
+    <nav class="icons" id="icons" aria-label="Aplicativos"></nav>
+    </div>
 
     <aside class="widgets" aria-label="Status">
       <div class="widget">
@@ -104,8 +110,6 @@
         <ul class="w-feed mono" id="w-feed"></ul>
       </div>
     </aside>
-
-    <nav class="icons" id="icons" aria-label="Aplicativos"></nav>
 
     <div id="windows" class="windows"></div>
 

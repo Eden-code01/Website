@@ -10,7 +10,8 @@
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const icon = (id, cls = "ic") => `<svg class="${cls}"><use href="#i-${id}"/></svg>`;
   const chips = (arr, ac = false) => `<div class="chips">${arr.map((t) => `<span class="chip${ac ? " ac" : ""}">${esc(t)}</span>`).join("")}</div>`;
-  const isMobile = () => matchMedia("(max-width: 820px)").matches;
+  const MOBILE_Q = "(max-width: 820px), (max-height: 520px)";
+  const isMobile = () => matchMedia(MOBILE_Q).matches;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const store = {
     get(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
@@ -247,8 +248,118 @@
   /* --------------------------------------------------------------- LOGIN */
   function fmtTime(d = new Date()) { return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); }
 
+  /* gravitational particle field — central well + pointer as a second mass */
+  function startGravity() {
+    const c = $("#gravity");
+    if (!c) return { collapse() {} };
+    const ctx = c.getContext("2d");
+    let w = 0, h = 0, dpr = 1, cx = 0, cy = 0, P = [], running = true, collapsing = false, G = 1;
+    const ptr = { x: 0, y: 0, on: false, m: 0 };
+    const waves = [];
+    const COLORS = ["139,123,255", "94,230,200", "236,238,243"];
+
+    const spawn = (p = {}) => {
+      const ang = Math.random() * Math.PI * 2;
+      const rMax = Math.hypot(w, h) * 0.55;
+      const r = 70 + Math.pow(Math.random(), 1.9) * rMax;
+      const v = Math.sqrt((1400 * G * r) / (r * r + 900)) * (0.9 + Math.random() * 0.18);
+      const dir = Math.random() < 0.85 ? 1 : -1;
+      p.x = cx + Math.cos(ang) * r; p.y = cy + Math.sin(ang) * r;
+      p.vx = -Math.sin(ang) * v * dir; p.vy = Math.cos(ang) * v * dir;
+      p.c = COLORS[Math.random() < 0.55 ? 0 : Math.random() < 0.6 ? 2 : 1];
+      p.s = Math.random() * 1.2 + 0.5;
+      p.a = Math.random() * 0.45 + 0.4;
+      return p;
+    };
+    const resize = () => {
+      dpr = Math.min(devicePixelRatio || 1, 2);
+      w = c.clientWidth; h = c.clientHeight;
+      c.width = w * dpr; c.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const av = $(".login-card .avatar");
+      const r = av && av.getBoundingClientRect();
+      cx = r && r.width ? r.left + r.width / 2 : w / 2;
+      cy = r && r.width ? r.top + r.height / 2 : h / 2;
+      const n = Math.round(Math.min(560, Math.max(160, (w * h) / 3200)));
+      P = Array.from({ length: n }, () => spawn());
+    };
+    resize();
+    addEventListener("resize", resize);
+    login.addEventListener("pointermove", (e) => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.on = true; });
+    login.addEventListener("pointerleave", () => (ptr.on = false));
+    login.addEventListener("pointerdown", (e) => {
+      if (e.target.closest("button")) return;
+      waves.push({ x: e.clientX, y: e.clientY, r: 0 });
+    });
+
+    let last = performance.now();
+    const frame = (now) => {
+      if (!running) return;
+      const dt = Math.min((now - last) / 16.67, 2.5);
+      last = now;
+      ctx.clearRect(0, 0, w, h);
+      ptr.m += ((ptr.on ? 1 : 0) - ptr.m) * 0.05;
+      ctx.globalCompositeOperation = "lighter";
+
+      for (const wv of waves) wv.r += 9 * dt;
+      while (waves.length && waves[0].r > Math.max(w, h)) waves.shift();
+
+      for (const p of P) {
+        // central well
+        let dx = cx - p.x, dy = cy - p.y, d2 = dx * dx + dy * dy, d = Math.sqrt(d2) || 1;
+        let f = (1400 * G) / (d2 + 900);
+        let ax = (dx / d) * f, ay = (dy / d) * f;
+        // pointer mass
+        if (ptr.m > 0.01) {
+          const ex = ptr.x - p.x, ey = ptr.y - p.y, e2 = ex * ex + ey * ey, e = Math.sqrt(e2) || 1;
+          const g = (700 * ptr.m) / (e2 + 1600);
+          ax += (ex / e) * g; ay += (ey / e) * g;
+        }
+        // click shockwaves push outward
+        for (const wv of waves) {
+          const sx = p.x - wv.x, sy = p.y - wv.y, sd = Math.hypot(sx, sy) || 1;
+          if (Math.abs(sd - wv.r) < 40) { const k = 0.9 * (1 - Math.abs(sd - wv.r) / 40); ax += (sx / sd) * k; ay += (sy / sd) * k; }
+        }
+        p.vx = (p.vx + ax * dt) * (collapsing ? 0.97 : 0.9995);
+        p.vy = (p.vy + ay * dt) * (collapsing ? 0.97 : 0.9995);
+        const ox = p.x, oy = p.y;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+
+        if (!collapsing && (d < 14 || d > Math.hypot(w, h))) { spawn(p); continue; }
+
+        const sp = Math.min(Math.hypot(p.vx, p.vy), 8);
+        const alpha = Math.min(0.95, p.a * (0.35 + sp / 3.5));
+        ctx.strokeStyle = `rgba(${p.c},${alpha})`;
+        ctx.lineWidth = p.s;
+        ctx.beginPath();
+        ctx.moveTo(ox - p.vx * 5 * dt, oy - p.vy * 5 * dt);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+      }
+
+      // core glow
+      const pulse = 1 + Math.sin(now / 900) * 0.08;
+      const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 120 * pulse * (collapsing ? 1.6 : 1));
+      grd.addColorStop(0, "rgba(139,123,255,.20)");
+      grd.addColorStop(1, "rgba(139,123,255,0)");
+      ctx.fillStyle = grd;
+      ctx.beginPath(); ctx.arc(cx, cy, 200, 0, Math.PI * 2); ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+
+      requestAnimationFrame(frame);
+    };
+    if (reduced) { frame(performance.now()); running = false; }
+    else requestAnimationFrame(frame);
+
+    return {
+      collapse() { collapsing = true; G = 6; },
+      stop() { running = false; removeEventListener("resize", resize); }
+    };
+  }
+
   function showLogin() {
     login.hidden = false;
+    const gravity = startGravity();
     const tick = () => {
       if (login.hidden) return;
       $("#login-time").textContent = fmtTime();
@@ -264,11 +375,12 @@
       if (going) return;
       going = true;
       btn.classList.add("loading");
+      gravity.collapse();
       $(".login-label", btn).textContent = "Autenticando…";
       setTimeout(() => {
         $(".login-label", btn).textContent = "Acesso liberado";
         login.classList.add("fade-out");
-        setTimeout(() => { login.hidden = true; showDesktop(); }, 550);
+        setTimeout(() => { login.hidden = true; gravity.stop(); showDesktop(); }, 550);
       }, 750);
     };
     btn.onclick = go;
@@ -297,8 +409,11 @@
 
     document.addEventListener("click", (e) => {
       const t = e.target.closest("[data-open]");
-      if (t) { e.preventDefault(); openApp(t.dataset.open); }
+      if (t) { e.preventDefault(); openApp(t.dataset.open, { fromDock: t.hasAttribute("data-dock") }); }
     });
+
+    let rt;
+    addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(fitWindows, 80); });
 
     startClock();
     startWidgets();
@@ -411,8 +526,8 @@
     closePalette();
     let win = wins.get(id);
     if (win) {
-      win.hidden = false;
-      win.classList.remove("minimizing");
+      if (win.hidden) restoreWin(win);
+      else if (opts.fromDock && win.classList.contains("focused")) return minimizeWin(id);
       focusWin(win);
       if (opts.project && id === "projects") renderProjects($(".win-body", win), opts.project);
       return win;
@@ -434,14 +549,15 @@
       <div class="win-body"></div>`;
 
     const area = $("#windows");
-    const W = Math.min(app.w || 780, area.clientWidth - 40);
-    const H = Math.min(app.h || 560, area.clientHeight - 110);
+    const k = winScale();
+    const W = Math.min((app.w || 780) * k, area.clientWidth - 24);
+    const H = Math.min((app.h || 560) * k, area.clientHeight - 96);
     win.style.width = W + "px";
     win.style.height = H + "px";
-    const baseX = Math.max(20, (area.clientWidth - W) / 2 - 60);
-    const baseY = Math.max(12, (area.clientHeight - H) / 2 - 40);
-    win.style.left = baseX + (cascade % 5) * 28 + "px";
-    win.style.top = baseY + (cascade % 5) * 24 + "px";
+    const baseX = Math.max(12, (area.clientWidth - W) / 2 - 60);
+    const baseY = Math.max(8, (area.clientHeight - H - 76) / 2 - 20);
+    win.style.left = Math.min(baseX + (cascade % 5) * 28, Math.max(12, area.clientWidth - W - 12)) + "px";
+    win.style.top = Math.min(baseY + (cascade % 5) * 24, Math.max(8, area.clientHeight - H - 84)) + "px";
     cascade++;
     area.appendChild(win);
     wins.set(id, win);
@@ -457,6 +573,9 @@
     $(".win-bar", win).ondblclick = (e) => { if (!e.target.closest(".win-ctrl") && !isMobile()) win.classList.toggle("max"); };
     win.addEventListener("pointerdown", () => focusWin(win));
     makeDraggable(win);
+    win.addEventListener("animationend", function done(e) {
+      if (e.animationName === "winIn") { win.style.animation = "none"; win.removeEventListener("animationend", done); }
+    });
     focusWin(win);
     syncDock();
     return win;
@@ -491,11 +610,60 @@
     setTimeout(() => { win.remove(); afterHide(); }, reduced ? 0 : 180);
   }
 
+  /* transform that sends a window into its dock icon (and back) */
+  function dockTransform(win) {
+    const btn = $(`.dock-btn[data-dock="${win.dataset.app}"]`);
+    const wr = win.getBoundingClientRect();
+    if (!btn || !wr.width) return "scale(.5)";
+    const br = btn.getBoundingClientRect();
+    const dx = br.left + br.width / 2 - (wr.left + wr.width / 2);
+    const dy = br.top + br.height / 2 - (wr.top + wr.height / 2);
+    const s = Math.max(br.width / wr.width, 0.04);
+    return `translate(${dx}px, ${dy}px) scale(${s}, ${Math.max(br.height / wr.height, 0.04)})`;
+  }
+  function winScale() { return innerWidth >= 2200 && innerHeight >= 1200 ? 1.35 : innerWidth >= 1700 && innerHeight >= 950 ? 1.15 : 1; }
+  const MIN_EASE = "cubic-bezier(.4, 0, .2, 1)";
+
   function minimizeWin(id) {
     const win = wins.get(id);
-    if (!win) return;
-    win.classList.add("minimizing");
-    setTimeout(() => { win.hidden = true; win.classList.remove("minimizing"); afterHide(); }, reduced ? 0 : 280);
+    if (!win || win.hidden || win.dataset.anim) return;
+    win.dataset.anim = "1";
+    win.classList.remove("focused");
+    const finish = () => { win.hidden = true; delete win.dataset.anim; afterHide(); };
+    if (reduced || !win.animate) return finish();
+    win.animate(
+      [{ transform: "none", opacity: 1, filter: "blur(0)" }, { transform: dockTransform(win), opacity: 0, filter: "blur(2px)" }],
+      { duration: 420, easing: MIN_EASE }
+    ).onfinish = finish;
+    win.style.pointerEvents = "none";
+    setTimeout(() => (win.style.pointerEvents = ""), 430);
+  }
+
+  function restoreWin(win) {
+    win.hidden = false;
+    win.style.animation = "none";
+    if (reduced || !win.animate) return;
+    win.dataset.anim = "1";
+    win.animate(
+      [{ transform: dockTransform(win), opacity: 0, filter: "blur(2px)" }, { transform: "none", opacity: 1, filter: "blur(0)" }],
+      { duration: 420, easing: MIN_EASE }
+    ).onfinish = () => delete win.dataset.anim;
+  }
+
+  /* keep windows inside the viewport on resize / rotation */
+  function fitWindows() {
+    const area = $("#windows");
+    if (!area || isMobile()) return;
+    const aw = area.clientWidth, ah = area.clientHeight;
+    for (const win of wins.values()) {
+      const app = APPS[win.dataset.app];
+      const k = winScale();
+      const w = Math.min((app.w || 780) * k, aw - 24), h = Math.min((app.h || 560) * k, ah - 96);
+      if (win.offsetWidth > aw - 24 || parseFloat(win.style.width) < w) win.style.width = w + "px";
+      if (win.offsetHeight > ah - 96 || parseFloat(win.style.height) < h) win.style.height = h + "px";
+      win.style.left = Math.min(Math.max(win.offsetLeft, 8), Math.max(8, aw - win.offsetWidth - 8)) + "px";
+      win.style.top = Math.min(Math.max(win.offsetTop, 8), Math.max(8, ah - win.offsetHeight - 84)) + "px";
+    }
   }
 
   function syncDock() {
