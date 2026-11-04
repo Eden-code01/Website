@@ -248,111 +248,91 @@
   /* --------------------------------------------------------------- LOGIN */
   function fmtTime(d = new Date()) { return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); }
 
-  /* gravitational particle field — central well + pointer as a second mass */
+  /* starfield — slow, organic depth drift; warps on sign-in */
   function startGravity() {
     const c = $("#gravity");
-    if (!c) return { collapse() {} };
+    if (!c) return { collapse() {}, stop() {} };
     const ctx = c.getContext("2d");
-    let w = 0, h = 0, dpr = 1, cx = 0, cy = 0, P = [], running = true, collapsing = false, G = 1;
-    const ptr = { x: 0, y: 0, on: false, m: 0 };
-    const waves = [];
-    const COLORS = ["139,123,255", "94,230,200", "236,238,243"];
+    let w = 0, h = 0, dpr = 1, S = [], running = true;
+    let speed = 0.00022, target = 0.00022, warp = false;
+    const cam = { x: 0, y: 0, tx: 0, ty: 0 };
+    const TINTS = ["236,238,243", "236,238,243", "236,238,243", "200,194,255", "170,240,225"];
+    const rnd = (a, b) => a + Math.random() * (b - a);
 
-    const spawn = (p = {}) => {
-      const ang = Math.random() * Math.PI * 2;
-      const rMax = Math.hypot(w, h) * 0.55;
-      const r = 70 + Math.pow(Math.random(), 1.9) * rMax;
-      const v = Math.sqrt((1400 * G * r) / (r * r + 900)) * (0.9 + Math.random() * 0.18);
-      const dir = Math.random() < 0.85 ? 1 : -1;
-      p.x = cx + Math.cos(ang) * r; p.y = cy + Math.sin(ang) * r;
-      p.vx = -Math.sin(ang) * v * dir; p.vy = Math.cos(ang) * v * dir;
-      p.c = COLORS[Math.random() < 0.55 ? 0 : Math.random() < 0.6 ? 2 : 1];
-      p.s = Math.random() * 1.2 + 0.5;
-      p.a = Math.random() * 0.45 + 0.4;
-      return p;
+    const spawn = (st = {}, far = false) => {
+      st.x = rnd(-1, 1); st.y = rnd(-1, 1);
+      st.z = far ? rnd(0.85, 1) : rnd(0.08, 1);
+      st.dx = rnd(-1, 1) * 0.00006; st.dy = rnd(-1, 1) * 0.00006;  // own drift, no shared pattern
+      st.sp = rnd(0.5, 1.5);                                       // individual depth speed
+      st.tw = rnd(0.4, 2.2); st.ph = rnd(0, Math.PI * 2);           // twinkle
+      st.c = TINTS[(Math.random() * TINTS.length) | 0];
+      st.r = rnd(0.35, 1.1);
+      st.px = null; st.py = null;
+      return st;
     };
     const resize = () => {
       dpr = Math.min(devicePixelRatio || 1, 2);
       w = c.clientWidth; h = c.clientHeight;
       c.width = w * dpr; c.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const av = $(".login-card .avatar");
-      const r = av && av.getBoundingClientRect();
-      cx = r && r.width ? r.left + r.width / 2 : w / 2;
-      cy = r && r.width ? r.top + r.height / 2 : h / 2;
-      const n = Math.round(Math.min(560, Math.max(160, (w * h) / 3200)));
-      P = Array.from({ length: n }, () => spawn());
+      const n = Math.round(Math.min(900, Math.max(220, (w * h) / 1700)));
+      S = Array.from({ length: n }, () => spawn());
     };
     resize();
     addEventListener("resize", resize);
-    login.addEventListener("pointermove", (e) => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.on = true; });
-    login.addEventListener("pointerleave", () => (ptr.on = false));
-    login.addEventListener("pointerdown", (e) => {
-      if (e.target.closest("button")) return;
-      waves.push({ x: e.clientX, y: e.clientY, r: 0 });
+    login.addEventListener("pointermove", (e) => {
+      cam.tx = (e.clientX / w - 0.5) * 2;
+      cam.ty = (e.clientY / h - 0.5) * 2;
     });
 
     let last = performance.now();
     const frame = (now) => {
       if (!running) return;
-      const dt = Math.min((now - last) / 16.67, 2.5);
+      const dt = Math.min((now - last) / 16.67, 3);
       last = now;
+      speed += (target - speed) * (warp ? 0.06 : 0.02);
+      cam.x += (cam.tx - cam.x) * 0.02;
+      cam.y += (cam.ty - cam.y) * 0.02;
       ctx.clearRect(0, 0, w, h);
-      ptr.m += ((ptr.on ? 1 : 0) - ptr.m) * 0.05;
-      ctx.globalCompositeOperation = "lighter";
+      const f = Math.max(w, h) * 0.5;
+      const cx = w / 2, cy = h / 2;
 
-      for (const wv of waves) wv.r += 9 * dt;
-      while (waves.length && waves[0].r > Math.max(w, h)) waves.shift();
+      for (const st of S) {
+        st.z -= speed * st.sp * dt;
+        st.x += st.dx * dt; st.y += st.dy * dt;
+        if (st.z <= 0.02) { spawn(st, true); continue; }
+        // parallax: nearer stars shift more with the pointer
+        const sx = cx + (st.x / st.z) * f - cam.x * 18 * (1 - st.z);
+        const sy = cy + (st.y / st.z) * f - cam.y * 18 * (1 - st.z);
+        if (sx < -50 || sx > w + 50 || sy < -50 || sy > h + 50) { spawn(st, true); continue; }
 
-      for (const p of P) {
-        // central well
-        let dx = cx - p.x, dy = cy - p.y, d2 = dx * dx + dy * dy, d = Math.sqrt(d2) || 1;
-        let f = (1400 * G) / (d2 + 900);
-        let ax = (dx / d) * f, ay = (dy / d) * f;
-        // pointer mass
-        if (ptr.m > 0.01) {
-          const ex = ptr.x - p.x, ey = ptr.y - p.y, e2 = ex * ex + ey * ey, e = Math.sqrt(e2) || 1;
-          const g = (700 * ptr.m) / (e2 + 1600);
-          ax += (ex / e) * g; ay += (ey / e) * g;
+        const depth = 1 - st.z;
+        const tw = 0.65 + 0.35 * Math.sin(now * 0.001 * st.tw + st.ph);
+        const fade = Math.min(1, (1 - st.z) * 4);  // fade in from far away
+        const alpha = Math.min(1, (0.22 + depth * 0.78) * tw * fade);
+        const size = st.r * (0.4 + depth * 1.6);
+
+        if (warp && st.px !== null) {
+          ctx.strokeStyle = `rgba(${st.c},${alpha})`;
+          ctx.lineWidth = size;
+          ctx.beginPath(); ctx.moveTo(st.px, st.py); ctx.lineTo(sx, sy); ctx.stroke();
+        } else {
+          ctx.fillStyle = `rgba(${st.c},${alpha})`;
+          ctx.beginPath(); ctx.arc(sx, sy, size, 0, Math.PI * 2); ctx.fill();
+          if (size > 1.3) { // soft halo on the closest stars
+            ctx.fillStyle = `rgba(${st.c},${alpha * 0.12})`;
+            ctx.beginPath(); ctx.arc(sx, sy, size * 3.2, 0, Math.PI * 2); ctx.fill();
+          }
         }
-        // click shockwaves push outward
-        for (const wv of waves) {
-          const sx = p.x - wv.x, sy = p.y - wv.y, sd = Math.hypot(sx, sy) || 1;
-          if (Math.abs(sd - wv.r) < 40) { const k = 0.9 * (1 - Math.abs(sd - wv.r) / 40); ax += (sx / sd) * k; ay += (sy / sd) * k; }
-        }
-        p.vx = (p.vx + ax * dt) * (collapsing ? 0.97 : 0.9995);
-        p.vy = (p.vy + ay * dt) * (collapsing ? 0.97 : 0.9995);
-        const ox = p.x, oy = p.y;
-        p.x += p.vx * dt; p.y += p.vy * dt;
-
-        if (!collapsing && (d < 14 || d > Math.hypot(w, h))) { spawn(p); continue; }
-
-        const sp = Math.min(Math.hypot(p.vx, p.vy), 8);
-        const alpha = Math.min(0.95, p.a * (0.35 + sp / 3.5));
-        ctx.strokeStyle = `rgba(${p.c},${alpha})`;
-        ctx.lineWidth = p.s;
-        ctx.beginPath();
-        ctx.moveTo(ox - p.vx * 5 * dt, oy - p.vy * 5 * dt);
-        ctx.lineTo(p.x, p.y);
-        ctx.stroke();
+        st.px = sx; st.py = sy;
       }
-
-      // core glow
-      const pulse = 1 + Math.sin(now / 900) * 0.08;
-      const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 120 * pulse * (collapsing ? 1.6 : 1));
-      grd.addColorStop(0, "rgba(139,123,255,.20)");
-      grd.addColorStop(1, "rgba(139,123,255,0)");
-      ctx.fillStyle = grd;
-      ctx.beginPath(); ctx.arc(cx, cy, 200, 0, Math.PI * 2); ctx.fill();
-      ctx.globalCompositeOperation = "source-over";
-
       requestAnimationFrame(frame);
     };
     if (reduced) { frame(performance.now()); running = false; }
     else requestAnimationFrame(frame);
 
     return {
-      collapse() { collapsing = true; G = 6; },
+      collapse() { warp = true; target = 0.028; },
       stop() { running = false; removeEventListener("resize", resize); }
     };
   }
